@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import Variation from './Variation';
-
 export default class Experiment extends Component {
 	static propTypes = {
 		children: PropTypes.node.isRequired,
@@ -40,7 +38,7 @@ export default class Experiment extends Component {
 		} else {
 			const variations = [];
 			React.Children.forEach(this.props.children, c => {
-				if(c.type === Variation) variations.push(c.props.id);
+				if(c.props.isVariation) variations.push(c.props.id);
 			});
 
 			selectedVariation = variations[Math.floor(Math.random() * variations.length)];
@@ -62,7 +60,7 @@ export default class Experiment extends Component {
 		const { selectedVariation } = this.state;
 
 		return React.Children.map(this.props.children, child => {
-			if(child.type === Variation && child.props.id !== selectedVariation) return;
+			if(child.props.isVariation && child.props.id !== selectedVariation) return;
 
 			return child;
 		});
