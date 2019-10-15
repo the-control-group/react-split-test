@@ -1,16 +1,32 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+const variationPromiseCache = new Map();
+
 export default class Experiment extends Component {
 	static propTypes = {
 		children: PropTypes.node.isRequired,
 		id: PropTypes.string.isRequired,
 		session: PropTypes.bool,
-		onParticipate: PropTypes.func
+		onParticipate: PropTypes.func,
+		variationDecider: PropTypes.func
 	};
 
 	static defaultProps = {
-		onParticipate: () => {}
+		onParticipate: () => {},
+		/**
+		 * Stub A/B decider
+		 * @param  {React.node} experimentChildren - React children nodes of the experiment
+		 * @return {Promise<variation id>} Selected variation ID
+		 */
+		variationDecider: experimentChildren => {
+			const variations = [];
+			React.Children.forEach(experimentChildren, c => {
+				if(c.props.isVariation) variations.push(c.props.id);
+			});
+
+			return Promise.resolve(variations[Math.floor(Math.random() * variations.length)]);
+		}
 	};
 
 	constructor(props) {
@@ -32,28 +48,48 @@ export default class Experiment extends Component {
 			// No/invalid cache
 		}
 
-		let selectedVariation;
 		if(cachedData) {
-			selectedVariation = cachedData.selectedVariation;
+			return cachedData.selectedVariation;
 		} else {
-			const variations = [];
-			React.Children.forEach(this.props.children, c => {
-				if(c.props.isVariation) variations.push(c.props.id);
-			});
+			// Cache promises so only one decision is made per experiment ID
+			let variationDecider;
+			if(variationPromiseCache.has(this.props.id)) {
+				variationDecider = variationPromiseCache.get(this.props.id);
+			} else {
+				variationDecider = this.props.variationDecider(this.props.children);
+				variationPromiseCache.set(this.props.id, variationDecider);
+			}
 
-			selectedVariation = variations[Math.floor(Math.random() * variations.length)];
+			variationDecider
+				.then(selectedVariation => {
+					const experimentData = {
+						id: this.props.id,
+						selectedVariation
+					};
 
-			const experimentData = {
-				id: this.props.id,
-				selectedVariation
-			};
+					// Since this is async, we need to check if another component with the same experiment
+					// has already made this decision in a potential race condition
+					let raceData;
+					try {
+						raceData = JSON.parse(this.storage.getItem(this.cacheKey));
+					} catch(e) {
+						// No/invalid data
+					}
 
-			this.props.onParticipate(experimentData);
+					if(!raceData) {
+						this.storage.setItem(this.cacheKey, JSON.stringify(experimentData));
+						this.props.onParticipate(experimentData);
+						// Remove the initial promise from the cache since subsequent renders/mounts will work off of the cache
+						variationPromiseCache.delete(this.props.id);
+					}
 
-			this.storage.setItem(this.cacheKey, JSON.stringify(experimentData));
+					this.setState({
+						selectedVariation: raceData ? raceData.selectedVariation : selectedVariation
+					});
+				});
+
+			return null;
 		}
-
-		return selectedVariation;
 	}
 
 	render() {
