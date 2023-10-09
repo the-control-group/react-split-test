@@ -7,7 +7,7 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "prepublishOnly": "npm test && npm run copy",
+    "prepublishOnly": "npm test && npm run build",
     "start": "webpack serve --mode development",
     "build": "tsc",
     "test": "tsc --noEmit && eslint src"

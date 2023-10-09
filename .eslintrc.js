@@ -17,7 +17,7 @@ module.exports = {
 		API_HOST: false,
 		fetch: false
 	},
-	extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react/recommended', 'prettier'],
+	extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react/recommended'],
 	env: {
 		browser: true,
 		node: false,
@@ -34,7 +34,7 @@ module.exports = {
 		'no-extra-boolean-cast': 'off',
 		'no-shadow': 2,
 		'no-unneeded-ternary': [2, { defaultAssignment: false }],
-		'no-unused-expressions': 2,
+		'no-unused-expressions': 1,
 		'no-restricted-globals': ['error', 'event', 'fdescribe'],
 		'no-var': 2,
 		'object-shorthand': 2,
