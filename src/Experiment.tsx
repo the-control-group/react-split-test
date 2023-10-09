@@ -1,35 +1,36 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropsWithChildren } from 'react';
 
 const variationPromiseCache = new Map();
 
-export default class Experiment extends Component {
-	static propTypes = {
-		children: PropTypes.node.isRequired,
-		id: PropTypes.string.isRequired,
-		session: PropTypes.bool,
-		onParticipate: PropTypes.func,
-		variationDecider: PropTypes.func
-	};
+type ExperimentProps = PropsWithChildren<{
+	id: string;
+	session?: boolean;
+	onParticipate: (experimentData: {id: string; selectedVariation: string;}) => void;
+	variationDecider: (experimentChildren: React.ReactNode) => Promise<string>;
+}>;
+
+export default class Experiment extends Component<ExperimentProps, {selectedVariation: string | null}> {
+	private storage: Storage;
+	private cacheKey: string;
 
 	static defaultProps = {
-		onParticipate: () => {},
+		onParticipate: (experimentData: {id: string; selectedVariation: string;}) => {},
 		/**
 		 * Stub A/B decider
 		 * @param  {React.node} experimentChildren - React children nodes of the experiment
 		 * @return {Promise<variation id>} Selected variation ID
 		 */
-		variationDecider: experimentChildren => {
-			const variations = [];
+		variationDecider: (experimentChildren: React.ReactNode): Promise<string> => {
+			const variations: string[] = [];
 			React.Children.forEach(experimentChildren, c => {
-				if(c.props.isVariation) variations.push(c.props.id);
+				if(React.isValidElement(c) && c.props.isVariation) variations.push(c.props.id);
 			});
 
 			return Promise.resolve(variations[Math.floor(Math.random() * variations.length)]);
 		}
 	};
 
-	constructor(props) {
+	constructor(props: ExperimentProps) {
 		super(props);
 
 		this.cacheKey = `@tcg-split-test:${this.props.id}`;
@@ -40,19 +41,22 @@ export default class Experiment extends Component {
 		};
 	}
 
-	chooseVariation() {
+	chooseVariation(): string | null {
 		let cachedData;
-		try {
-			cachedData = JSON.parse(this.storage.getItem(this.cacheKey));
-		} catch (e) {
-			// No/invalid cache
+		const cachedString = this.storage.getItem(this.cacheKey);
+		if(cachedString) {
+			try {
+				cachedData = JSON.parse(cachedString);
+			} catch (e) {
+				console.error('Invalid experiment cache data', e);
+			}
 		}
 
 		if(cachedData) {
 			return cachedData.selectedVariation;
 		} else {
 			// Cache promises so only one decision is made per experiment ID
-			let variationDecider;
+			let variationDecider: ReturnType<ExperimentProps['variationDecider']>;
 			if(variationPromiseCache.has(this.props.id)) {
 				variationDecider = variationPromiseCache.get(this.props.id);
 			} else {
@@ -70,10 +74,13 @@ export default class Experiment extends Component {
 					// Since this is async, we need to check if another component with the same experiment
 					// has already made this decision in a potential race condition
 					let raceData;
-					try {
-						raceData = JSON.parse(this.storage.getItem(this.cacheKey));
-					} catch(e) {
-						// No/invalid data
+					const cachedRaceString = this.storage.getItem(this.cacheKey);
+					if(cachedRaceString) {
+						try {
+							raceData = JSON.parse(cachedRaceString);
+						} catch(e) {
+							console.error('Invalid experiment race cache data', e);
+						}
 					}
 
 					if(!raceData) {
@@ -96,7 +103,7 @@ export default class Experiment extends Component {
 		const { selectedVariation } = this.state;
 
 		return React.Children.map(this.props.children, child => {
-			if(child.props.isVariation && child.props.id !== selectedVariation) return;
+			if(React.isValidElement(child) && child.props.isVariation && child.props.id !== selectedVariation) return;
 
 			return child;
 		});

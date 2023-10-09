@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import { Experiment, Variation } from './src';
 
@@ -79,9 +79,7 @@ const Example = () => (
 
 const div = document.createElement('div');
 div.id = 'app-root';
-document.querySelector('body').append(div);
+document.querySelector('body')?.append(div);
 
-ReactDOM.render(
-	<Example/>,
-	document.querySelector('#app-root')
-);
+const container = document.querySelector('#app-root');
+container && createRoot(container).render(<Example/>);
