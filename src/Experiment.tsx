@@ -14,7 +14,7 @@ export default class Experiment extends Component<ExperimentProps, {selectedVari
 	private cacheKey: string;
 
 	static defaultProps = {
-		onParticipate: (experimentData: {id: string; selectedVariation: string;}) => {},
+		onParticipate: () => {},
 		/**
 		 * Stub A/B decider
 		 * @param  {React.node} experimentChildren - React children nodes of the experiment
