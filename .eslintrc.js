@@ -1,58 +1,56 @@
 module.exports = {
-	parser: 'babel-eslint',
+	parser: '@typescript-eslint/parser',
 	parserOptions: {
-		ecmaVersion: 8,
+		ecmaVersion: 2022,
 		sourceType: 'module',
 		ecmaFeatures: {
-			impliedStrict: true,
-			jsx: true,
-			experimentalObjectRestSpread: true
+			jsx: true
 		}
 	},
-	plugins: [
-		'react'
-	],
-	extends: [
-		'eslint:recommended',
-		'plugin:react/recommended'
-	],
+	settings: {
+		react: {
+			version: 'detect'
+		}
+	},
+	plugins: ['react', 'react-hooks'],
+	globals: {
+		API_HOST: false,
+		fetch: false
+	},
+	extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react/recommended', 'prettier'],
 	env: {
 		browser: true,
-		node: true,
-		es6: true,
-		jest: true
+		node: false,
+		es6: true
 	},
 	rules: {
-		'brace-style': 2,
 		camelcase: 2,
-		'class-methods-use-this': 2,
-		'comma-dangle': 2,
-		'comma-spacing': 2,
+		'class-methods-use-this': [2, { exceptMethods: ['componentDidCatch'] }],
 		'dot-notation': 2,
 		eqeqeq: 2,
-		indent: [2, 'tab', {SwitchCase: 1}],
-		'key-spacing': 2,
-		'lines-between-class-members': 2,
-		'max-len': [2, 200, 2],
-		'newline-per-chained-call': [2, {ignoreChainWithDepth: 3}],
-		'no-console': [2, {allow: ['error']}],
-		'no-multiple-empty-lines': 2,
+		'lines-between-class-members': [2, 'always', { exceptAfterSingleLine: true }],
+		'no-alert': 2,
+		'no-console': [2, { allow: ['error'] }],
+		'no-extra-boolean-cast': 'off',
 		'no-shadow': 2,
-		'no-unneeded-ternary': [2, {defaultAssignment: false}],
+		'no-unneeded-ternary': [2, { defaultAssignment: false }],
 		'no-unused-expressions': 2,
+		'no-restricted-globals': ['error', 'event', 'fdescribe'],
 		'no-var': 2,
 		'object-shorthand': 2,
-		'padded-blocks': [2, 'never'],
-		'prefer-const': 2,
-		'prefer-arrow-callback': 2,
-		'quote-props': [2, 'as-needed'],
-		quotes: [2, 'single'],
+		'prefer-const': 0,
+		'prefer-arrow-callback': 0,
+		'prefer-object-spread': 2,
+		quotes: [2, 'single', { avoidEscape: true, allowTemplateLiterals: false }],
 		'require-await': 2,
-		semi: [2, 'always'],
-		'space-before-function-paren': [2, {anonymous: 'always', named: 'never'}],
-		'space-infix-ops': 2,
 		strict: 2,
 		yoda: 2,
-		'react/no-unescaped-entities': 0
+		'jsx-quotes': 2,
+		'react/jsx-curly-brace-presence': [2, 'never'],
+		'react/no-unescaped-entities': ['error', { forbid: ['>', '}'] }],
+		'react/no-unused-prop-types': 2,
+		'react/no-unused-state': 2,
+		'react-hooks/rules-of-hooks': 2,
+		'react-hooks/exhaustive-deps': 1
 	}
 };
